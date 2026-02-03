@@ -87,7 +87,7 @@ const ApplicationSchema = new mongoose.Schema({
   // Admin Fields
   status: {
     type: String,
-    enum: ['pending', 'shortlisted', 'selected', 'rejected'],
+    enum: ['pending', 'shortlisted', 'selected', 'rejected', 'approved'],
     default: 'pending'
   },
   adminRemarks: {

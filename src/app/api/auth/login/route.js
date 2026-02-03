@@ -50,7 +50,7 @@ export async function POST(request) {
       }
     }, {
       headers: {
-        'Set-Cookie': `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax`
+        'Set-Cookie': `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=86400`
       }
     });
   } catch (error) {

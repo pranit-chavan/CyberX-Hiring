@@ -149,6 +149,39 @@ export async function POST(request) {
     const application = new Application(processedData);
     await application.save();
 
+    // Send data to webhook (excluding resume) - non-blocking
+    try {
+      const webhookData = {
+        applicationId: application._id.toString(),
+        fullName: processedData.fullName,
+        email: processedData.email,
+        whatsappNumber: processedData.whatsappNumber,
+        linkedinProfile: processedData.linkedinProfile,
+        statusDescription: processedData.statusDescription,
+        organizationName: processedData.organizationName,
+        domainInterests: processedData.domainInterests,
+        domainLevels: processedData.domainLevels,
+        platformsUsed: processedData.platformsUsed,
+        certificationDetails: processedData.certificationDetails,
+        platformProfileLink: processedData.platformProfileLink,
+        ctfParticipation: processedData.ctfParticipation,
+        whyJoinCyberX: processedData.whyJoinCyberX,
+        submittedAt: application.submittedAt,
+        status: application.status
+      };
+
+      const webhookUrl = process.env.WEBHOOK_URL;
+      if (webhookUrl) {
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookData)
+        }).catch(err => console.error('Webhook error:', err));
+      }
+    } catch (webhookError) {
+      console.error('Webhook preparation error:', webhookError);
+    }
+
     return Response.json(
       {
         message: 'Application submitted successfully',

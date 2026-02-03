@@ -39,6 +39,6 @@ export async function GET(request) {
         }
     } catch (error) {
         console.error('Setup Error:', error);
-        return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 });
+        return NextResponse.json({ error: 'Setup failed' }, { status: 500 });
     }
 }
