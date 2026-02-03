@@ -254,14 +254,18 @@ export default function CyberXHiring() {
         body: formData
       });
 
-      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Submission failed');
+      }
 
       localStorage.setItem(duplicateKey, 'submitted');
       // Clear draft on successful submission
       localStorage.removeItem(STORAGE_KEY);
       setSuccess(true);
-    } catch {
-      setSubmitError('Submission failed. Try again later.');
+    } catch (err) {
+      setSubmitError(err.message || 'Submission failed. Try again later.');
     } finally {
       setLoading(false);
     }

@@ -18,84 +18,70 @@ const ApplicationSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-
-  // Academic Information (repurposed for CyberX)
-  branch: {
-    type: String,
-    required: true,
-    trim: true,
-    comment: 'College / Organization name'
-  },
-  year: {
-    type: String,
-    required: true,
-    trim: true,
-    comment: 'Year of study or work experience'
-  },
-
-  // Role Preferences
-  primaryRole: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  secondaryRole: {
+  linkedinProfile: {
     type: String,
     trim: true
   },
 
-  // Experience and Motivation
-  whyThisRole: {
+  // Current Status & Education
+  statusDescription: {
+    type: String,
+    required: true,
+    trim: true,
+    comment: 'What describes me best'
+  },
+  organizationName: {
     type: String,
     trim: true,
-    comment: 'Why join CyberX Community'
-  },
-  pastExperience: {
-    type: mongoose.Schema.Types.Mixed,
-    comment: 'Detailed experience and background information'
+    comment: 'College name or organization name'
   },
 
-  // Other Activities
-  hasOtherClubs: {
+  // Domain Interests
+  domainInterests: [{
+    type: String,
+    trim: true
+  }],
+  domainLevels: {
+    type: Map,
+    of: String,
+    comment: 'Domain expertise levels as key-value pairs e.g. {"Web Security": "Intermediate"}'
+  },
+
+  // Practical Exposure
+  platformsUsed: [{
+    type: String,
+    trim: true
+  }],
+  certificationDetails: {
+    type: String,
+    trim: true
+  },
+  platformProfileLink: {
     type: String,
     trim: true,
-    comment: 'CTF participation'
+    comment: 'TryHackMe/HackTheBox profile link'
   },
-
-  // Availability
-  timeAvailability: {
+  ctfParticipation: {
     type: String,
-    trim: true,
-    comment: 'Current status'
+    trim: true
   },
 
-  // Resume file path
+  // Motivation & Declaration
+  whyJoinCyberX: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  declarationAccepted: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+
+  // Resume file path (Legacy/Optional now as it was removed from form but kept for backend compatibility if needed or re-added)
   resumePath: {
     type: String,
-    trim: true,
-    comment: 'Path to uploaded resume file'
-  },
-
-  // Metadata for new form fields (flexible storage)
-  metadata: {
-    currentStatus: String,
-    cityState: String,
-    highestQualification: String,
-    specialization: String,
-    skillLevel: String,
-    handsOnDuration: String,
-    domainInterests: [String],
-    platformsUsed: String,
-    profileLinks: String,
-    ctfParticipation: String,
-    ctfAchievements: String,
-    projectsDescription: String,
-    portfolioLink: String,
-    followsEthics: String,
-    unauthorizedTesting: String,
-    unauthorizedExplanation: String,
-    contributionAreas: [String],
-    declarationAccepted: Boolean
+    trim: true
   },
 
   // Admin Fields
@@ -122,35 +108,23 @@ const ApplicationSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Performance indexes for production-scale queries
+// Performance indexes
 ApplicationSchema.index({ email: 1 }, { unique: true });
 ApplicationSchema.index({ whatsappNumber: 1 });
 ApplicationSchema.index({ status: 1 });
 ApplicationSchema.index({ submittedAt: -1 });
-ApplicationSchema.index({ branch: 1 });
-ApplicationSchema.index({ year: 1 });
-ApplicationSchema.index({ primaryRole: 1 });
-ApplicationSchema.index({ secondaryRole: 1 });
-ApplicationSchema.index({ resumePath: 1 });
+ApplicationSchema.index({ organizationName: 1 });
+ApplicationSchema.index({ statusDescription: 1 });
 
-// Compound indexes for common admin queries
-ApplicationSchema.index({ status: 1, submittedAt: -1 });
-ApplicationSchema.index({ primaryRole: 1, status: 1 });
-ApplicationSchema.index({ branch: 1, status: 1 });
-ApplicationSchema.index({ 'metadata.currentStatus': 1, status: 1 });
-ApplicationSchema.index({ 'metadata.skillLevel': 1, status: 1 });
-ApplicationSchema.index({ 'metadata.domainInterests': 1, status: 1 });
-
-// Text search index for admin search functionality
+// Text search index
 ApplicationSchema.index({
   fullName: 'text',
   email: 'text',
   whatsappNumber: 'text',
-  branch: 'text',
-  primaryRole: 'text',
-  'metadata.highestQualification': 'text',
-  'metadata.specialization': 'text',
-  'metadata.projectsDescription': 'text'
+  organizationName: 'text',
+  statusDescription: 'text',
+  whyJoinCyberX: 'text',
+  certificationDetails: 'text'
 });
 
 export default mongoose.models.Application || mongoose.model('Application', ApplicationSchema);

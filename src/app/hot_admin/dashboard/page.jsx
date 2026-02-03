@@ -116,25 +116,25 @@ export default function AdminDashboard() {
       const matchesSearch = searchTerm === '' ||
         app.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (app.whatsappNumber && app.whatsappNumber.includes(searchTerm));
+        (app.whatsappNumber && app.whatsappNumber.includes(searchTerm)) ||
+        (app.organizationName && app.organizationName.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesStatus = statusFilter === 'All' || app.status === statusFilter;
-      const appSkillLevel = app.metadata?.skillLevel || 'N/A';
-      const matchesExperience = experienceFilter === 'All' || appSkillLevel === experienceFilter;
+      const matchesExperience = experienceFilter === 'All' || app.skillLevel === experienceFilter; // Changed from metadata
       return matchesSearch && matchesStatus && matchesExperience;
     });
   }, [applications, searchTerm, statusFilter, experienceFilter]);
 
   const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Phone', 'Qualification', 'Branch', 'Status', 'Skill Level', 'Interested Domains'];
+    // Updated Headers and Fields matching new schema
+    const headers = ['Name', 'Email', 'Phone', 'Status Description', 'Organization', 'Status', 'Interested Domains'];
     const csvData = filteredApplications.map(app => [
       app.fullName,
       app.email,
       app.whatsappNumber || '',
-      app.highestQualification || app.metadata?.highestQualification || 'N/A',
-      app.specialization || app.metadata?.specialization || 'N/A',
+      app.statusDescription || 'N/A',
+      app.organizationName || 'N/A',
       app.status,
-      app.metadata?.skillLevel || 'N/A',
-      (app.metadata?.domainInterests || []).join(', ')
+      (app.domainInterests || []).join(', ')
     ]);
     const csvContent = [headers, ...csvData].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -219,13 +219,8 @@ export default function AdminDashboard() {
               <option value="selected">Selected</option>
               <option value="rejected">Rejected</option>
             </select>
-            <select value={experienceFilter} onChange={(e) => setExperienceFilter(e.target.value)}
-              className="bg-[#1C1C1C] border border-[#2A2A2A] text-[#9A9A9A] text-sm rounded-lg px-3 py-2 focus:outline-none">
-              <option value="All">All Experience</option>
-              <option value="Beginner">Beginner</option>
-              <option value="Intermediate">Intermediate</option>
-              <option value="Advanced">Advanced</option>
-            </select>
+            {/* Experience filter removed or needs update if skillLevel is not used for primary filtering needed by user? - Keeping it basic */}
+            {/* <select value={experienceFilter} ... > optional if needed based on skillLevel </select> */}
 
             <div className="relative exportDropdown">
               <button onClick={() => setShowExportDropdown(!showExportDropdown)} className="bg-[#E6C200] text-black text-sm font-medium px-4 py-2 rounded-lg">Export</button>
@@ -247,9 +242,8 @@ export default function AdminDashboard() {
                 <thead>
                   <tr className="bg-[#151515] border-b border-[#2A2A2A] text-[#666] text-xs uppercase font-semibold tracking-wider">
                     <th className="py-4 px-6 w-1/5">Applicant</th>
-                    <th className="py-4 px-6 w-1/6">Education</th>
+                    <th className="py-4 px-6 w-1/5">Organization / Status</th>
                     <th className="py-4 px-6">Interested Domains</th>
-                    <th className="py-4 px-6">Contribution</th>
                     <th className="py-4 px-6">Status</th>
                     <th className="py-4 px-6">Applied Date</th>
                     <th className="py-4 px-6 text-right">Actions</th>
@@ -263,40 +257,28 @@ export default function AdminDashboard() {
                         <div className="text-[#666] text-xs mt-0.5">{app.email}</div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm text-[#F2F2F2] font-medium">
-                          {app.highestQualification || app.metadata?.highestQualification || 'Not Provided'}
-                        </span>
+                        <div className="text-[#F2F2F2] font-medium text-sm">{app.organizationName || 'N/A'}</div>
+                        <div className="text-[#666] text-xs mt-0.5">{app.statusDescription}</div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex flex-wrap gap-1">
-                          {(app.metadata?.domainInterests || []).slice(0, 2).map((d, i) => (
+                          {(app.domainInterests || []).slice(0, 3).map((d, i) => (
                             <span key={i} className="text-[10px] bg-[#2A2A2A] text-[#ccc] px-1.5 py-0.5 rounded">{d}</span>
                           ))}
-                          {(app.metadata?.domainInterests?.length || 0) > 2 && <span className="text-[10px] text-[#555]">+{app.metadata.domainInterests.length - 2}</span>}
-                          {(app.metadata?.domainInterests?.length === 0) && <span className="text-[10px] text-[#444]">-</span>}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex flex-wrap gap-1">
-                          {/* Robust check for contributionAreas */}
-                          {(app.contributionAreas && app.contributionAreas.length > 0
-                            ? app.contributionAreas
-                            : app.metadata?.contributionAreas || [app.primaryRole || 'N/A']
-                          ).slice(0, 2).map((r, i) => (
-                            <span key={i} className="text-[10px] bg-[#2A2A2A] border border-[#333] text-[#9A9A9A] px-1.5 py-0.5 rounded">{r}</span>
-                          ))}
+                          {(app.domainInterests?.length || 0) > 3 && <span className="text-[10px] text-[#555]">+{app.domainInterests.length - 3}</span>}
+                          {(app.domainInterests?.length === 0) && <span className="text-[10px] text-[#444]">-</span>}
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusColor(app.status)} capitalize`}>{app.status}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-[#666] text-xs">{formatDate(app.createdAt)}</span>
+                        <span className="text-[#666] text-xs">{formatDate(app.submittedAt || app.createdAt)}</span>
                       </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex justify-end gap-2">
                           <button onClick={() => setSelectedApp(app)} className="bg-[#E6C200]/10 hover:bg-[#E6C200]/20 text-[#E6C200] border border-[#E6C200]/50 px-2.5 py-1.5 rounded text-xs font-medium transition-colors">
-                            View Application
+                            View
                           </button>
                           <button onClick={() => handleDeleteApplication(app._id)} className="text-[#9A9A9A] hover:text-red-400 p-1.5 rounded hover:bg-red-500/10 transition-colors" title="Delete">🗑️</button>
                         </div>
@@ -331,9 +313,9 @@ function ApplicationDetailsModal({ app, onClose, onUpdateStatus }) {
     onClose();
   };
 
-  // Helper to safely get data
-  const val = (key) => app[key] || app.metadata?.[key] || 'Not Provided';
-  const valArr = (key) => (app[key] && app[key].length) ? app[key] : (app.metadata?.[key] && app.metadata[key].length) ? app.metadata[key] : [];
+  // Safe accessor updated for flat schema
+  const val = (key) => app[key] !== undefined && app[key] !== null && app[key] !== '' ? app[key] : 'Not Provided';
+  const valArr = (key) => (Array.isArray(app[key]) && app[key].length > 0) ? app[key] : [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden">
@@ -350,98 +332,62 @@ function ApplicationDetailsModal({ app, onClose, onUpdateStatus }) {
               <InfoItem label="Full Name" value={app.fullName} />
               <InfoItem label="Email" value={app.email} />
               <InfoItem label="Mobile / WhatsApp" value={app.whatsappNumber} />
-              <InfoItem label="City & State" value={val('cityState')} />
-              <InfoItem label="College / Organization" value={val('organizationName')} />
-              <InfoItem label="Current Status" value={val('currentStatus')} highlight />
+              <InfoItem label="LinkedIn Profile" value={val('linkedinProfile')} />
+              <InfoItem label="Current Status" value={val('statusDescription')} highlight />
+              <InfoItem label="Organization / College" value={val('organizationName')} />
             </div>
           </section>
 
           <section>
-            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">2. Education & Background</h3>
-            <div className="bg-[#1C1C1C] p-4 rounded-lg border border-[#2A2A2A] grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <InfoItem label="Highest Qualification (Degree)" value={val('highestQualification')} />
-              <InfoItem label="Branch / Specialization" value={val('specialization')} />
-              <InfoItem label="Year of Study / Experience" value={val('yearOfStudyOrWorkExp') === 'Not Provided' ? (app.metadata?.currentYear || app.metadata?.handsOnDuration) : val('yearOfStudyOrWorkExp')} />
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">3. Cybersecurity Experience</h3>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="bg-[#1C1C1C] px-4 py-2 rounded border border-[#333]">
-                <span className="text-[#555] text-xs uppercase block">Skill Level</span>
-                <span className="text-[#E6C200] font-medium">{val('skillLevel')}</span>
-              </div>
-              <div className="bg-[#1C1C1C] px-4 py-2 rounded border border-[#333]">
-                <span className="text-[#555] text-xs uppercase block">Hands-on Duration</span>
-                <span className="text-[#ccc] font-medium">{val('handsOnDuration')}</span>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-2">4. Interested Domains</h3>
-            <div className="flex flex-wrap gap-2">
-              {valArr('domainInterests').length ? valArr('domainInterests').map((d, i) => (
-                <span key={i} className="text-xs bg-[#2A2A2A] text-[#ccc] px-2 py-1 rounded border border-[#333]">{d}</span>
-              )) : <span className="text-[#666] italic">None Selected</span>}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-2">5. Contribution Areas</h3>
-            <div className="flex flex-wrap gap-2">
-              {valArr('contributionAreas').length ? valArr('contributionAreas').map((r, i) => (
-                <span key={i} className="text-xs bg-[#2A2A2A] text-[#ccc] px-2 py-1 rounded border border-[#333]">{r}</span>
-              )) : <span className="text-[#666] italic">None Selected</span>}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">6. Practical Exposure</h3>
-            <div className="bg-[#1C1C1C] p-4 rounded-lg space-y-3 text-sm border border-[#2A2A2A]">
-              <div><span className="text-[#555] text-xs uppercase block mb-1">Learning Platforms Used</span> <span className="text-[#ccc]">{val('platformsUsed')}</span></div>
-              <div><span className="text-[#555] text-xs uppercase block mb-1">Profile Links (LinkedIn/GitHub)</span>
-                <div className="text-blue-400 break-all">{val('profileLinks')}</div>
-              </div>
-              <div><span className="text-[#555] text-xs uppercase block mb-1">CTF Participation</span> <span className="text-[#ccc]">{val('ctfParticipation')}</span></div>
-              {val('ctfAchievements') !== 'Not Provided' && (
-                <div><span className="text-[#555] text-xs uppercase block mb-1">CTF Achievements</span> <span className="text-[#ccc]">{val('ctfAchievements')}</span></div>
-              )}
-              {val('projectsDescription') !== 'Not Provided' && (
-                <div><span className="text-[#555] text-xs uppercase block mb-1">Projects</span> <span className="text-[#ccc]">{val('projectsDescription')}</span></div>
-              )}
-              {val('portfolioLink') !== 'Not Provided' && (
-                <div><span className="text-[#555] text-xs uppercase block mb-1">Portfolio</span> <span className="text-blue-400">{val('portfolioLink')}</span></div>
-              )}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">7. Motivation</h3>
-            <div className="bg-[#1C1C1C] p-4 rounded-lg border border-[#2A2A2A] text-sm text-[#ccc] leading-relaxed italic">
-              "{val('whyThisRole')}"
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">8. Ethics & Declaration</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-[#999]">
-              <div><span className="text-[#555] uppercase">Follows Ethics?</span> {val('followsEthics')}</div>
-              <div>
-                <span className="text-[#555] uppercase">Unauthorized Testing?</span> {val('unauthorizedTesting')}
-                {val('unauthorizedExplanation') !== 'Not Provided' && (
-                  <div className="mt-2 p-2 bg-[#2a1a1a] border border-red-500/20 text-red-200 rounded">
-                    <span className="block text-[10px] text-red-400 uppercase mb-1">Explanation:</span>
-                    {val('unauthorizedExplanation')}
+            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-2">2. Interested Domains</h3>
+            {/* Show Level for each domain if available */}
+            <div className="flex flex-col gap-2">
+              {valArr('domainInterests').length ? valArr('domainInterests').map((d, i) => {
+                const level = app.domainLevels && app.domainLevels[d] ? app.domainLevels[d] : 'N/A';
+                return (
+                  <div key={i} className="flex justify-between items-center bg-[#1C1C1C] p-2 rounded border border-[#333]">
+                    <span className="text-[#ccc] text-sm">{d}</span>
+                    <span className="text-xs text-[#E6C200] font-mono border border-[#E6C200]/30 px-2 rounded">{level}</span>
                   </div>
-                )}
-              </div>
+                );
+              }) : <span className="text-[#666] italic">None Selected</span>}
             </div>
           </section>
 
           <section>
-            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">9. Resume</h3>
+            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">3. Practical Exposure</h3>
+            <div className="bg-[#1C1C1C] p-4 rounded-lg space-y-3 text-sm border border-[#2A2A2A]">
+              <div><span className="text-[#555] text-xs uppercase block mb-1">Learning Platforms Used</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {valArr('platformsUsed').map((p, i) => <span key={i} className="text-xs bg-[#333] px-2 py-1 rounded">{p}</span>)}
+                  {valArr('platformsUsed').length === 0 && <span className="text-[#666] italic">None</span>}
+                </div>
+              </div>
+              <div><span className="text-[#555] text-xs uppercase block mb-1">Platform Profile Link (THM/HTB)</span>
+                <div className="text-blue-400 break-all">{val('platformProfileLink')}</div>
+              </div>
+              <div><span className="text-[#555] text-xs uppercase block mb-1">Certifications</span> <span className="text-[#ccc] whitespace-pre-wrap">{val('certificationDetails')}</span></div>
+              <div><span className="text-[#555] text-xs uppercase block mb-1">CTF Participation</span> <span className="text-[#ccc]">{val('ctfParticipation')}</span></div>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">4. Motivation</h3>
+            <div className="bg-[#1C1C1C] p-4 rounded-lg border border-[#2A2A2A] text-sm text-[#ccc] leading-relaxed italic">
+              "{val('whyJoinCyberX')}"
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">5. Declaration</h3>
+            <div className="text-sm text-[#ccc]">
+              <span className="text-[#555] uppercase font-semibold mr-2">Accepted:</span>
+              {app.declarationAccepted ? <span className="text-green-400">Yes</span> : <span className="text-red-400">No</span>}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-sm font-bold text-[#E6C200] uppercase tracking-wider mb-3">6. Resume</h3>
             {app.resumePath ? (
               <a href={app.resumePath} target="_blank" className="inline-flex items-center gap-2 bg-[#E6C200] hover:bg-[#CCAD00] text-black px-4 py-2 rounded font-medium transition-colors text-sm">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -474,6 +420,7 @@ function ApplicationDetailsModal({ app, onClose, onUpdateStatus }) {
     </div>
   );
 }
+
 function InfoItem({ label, value, highlight }) {
   return (
     <div className="break-words">

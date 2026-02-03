@@ -122,58 +122,28 @@ export async function POST(request) {
       resumePath = blob.url; // Store the public URL
     }
 
-    // Map new form fields to existing schema
+    // Map new form fields directly to schema
     const processedData = {
       fullName: data.fullName,
       email: data.email.toLowerCase(),
       whatsappNumber: data.whatsappNumber,
-      branch: data.organizationName,
-      year: data.yearOfStudyOrWorkExp,
-      primaryRole: data.contributionAreas?.[0] || '',
-      secondaryRole: data.contributionAreas?.[1] || '',
-      whyThisRole: data.whyJoinCyberX || '',
-      pastExperience: {
-        currentStatus: data.currentStatus,
-        cityState: data.cityState,
-        highestQualification: data.highestQualification,
-        specialization: data.specialization,
-        skillLevel: data.skillLevel,
-        handsOnDuration: data.handsOnDuration,
-        domainInterests: data.domainInterests || [],
-        platformsUsed: data.platformsUsed || '',
-        profileLinks: data.profileLinks || '',
-        ctfParticipation: data.ctfParticipation || '',
-        ctfAchievements: data.ctfAchievements || '',
-        projectsDescription: data.projectsDescription || '',
-        portfolioLink: data.portfolioLink || '',
-        followsEthics: data.followsEthics || '',
-        unauthorizedTesting: data.unauthorizedTesting || '',
-        unauthorizedExplanation: data.unauthorizedExplanation || ''
-      },
-      hasOtherClubs: data.ctfParticipation || '',
-      timeAvailability: data.currentStatus || '',
-      resumePath: resumePath || '',
-      // Store all new fields in a metadata object for future use
-      metadata: {
-        currentStatus: data.currentStatus,
-        cityState: data.cityState,
-        highestQualification: data.highestQualification,
-        specialization: data.specialization,
-        skillLevel: data.skillLevel,
-        handsOnDuration: data.handsOnDuration,
-        domainInterests: data.domainInterests || [],
-        platformsUsed: data.platformsUsed || '',
-        profileLinks: data.profileLinks || '',
-        ctfParticipation: data.ctfParticipation || '',
-        ctfAchievements: data.ctfAchievements || '',
-        projectsDescription: data.projectsDescription || '',
-        portfolioLink: data.portfolioLink || '',
-        followsEthics: data.followsEthics || '',
-        unauthorizedTesting: data.unauthorizedTesting || '',
-        unauthorizedExplanation: data.unauthorizedExplanation || '',
-        contributionAreas: data.contributionAreas || [],
-        declarationAccepted: data.declarationAccepted || false
-      }
+      linkedinProfile: data.linkedinProfile || '',
+
+      statusDescription: data.statusDescription,
+      organizationName: data.organizationName || '',
+
+      domainInterests: data.domainInterests || [],
+      domainLevels: data.domainLevels || {},
+
+      platformsUsed: data.platformsUsed || [],
+      certificationDetails: data.certificationDetails || '',
+      platformProfileLink: data.platformProfileLink || '',
+      ctfParticipation: data.ctfParticipation || '',
+
+      whyJoinCyberX: data.whyJoinCyberX || '',
+      declarationAccepted: data.declarationAccepted === 'true' || data.declarationAccepted === true,
+
+      resumePath: resumePath || ''
     };
 
     const application = new Application(processedData);
@@ -188,8 +158,26 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Application submission error:', error);
+
+    // Handle duplicate key error (Mongoose code 11000)
+    if (error.code === 11000) {
+      return Response.json(
+        { error: 'Application with this Email or WhatsApp number already exists.' },
+        { status: 400 }
+      );
+    }
+
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return Response.json(
+        { error: `Validation Error: ${messages.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     return Response.json(
-      { error: 'Failed to submit application' },
+      { error: 'Failed to submit application. Please try again.' },
       { status: 500 }
     );
   }
@@ -204,22 +192,18 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const search = searchParams.get('search');
-    const role = searchParams.get('role');
 
     // Build filter object
     const filter = {};
     if (status) filter.status = status;
-    if (role) {
-      filter.$or = [
-        { primaryRole: { $regex: role, $options: 'i' } },
-        { secondaryRole: { $regex: role, $options: 'i' } }
-      ];
-    }
+
     if (search) {
       filter.$or = [
         { fullName: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
-        { whatsappNumber: { $regex: search, $options: 'i' } }
+        { whatsappNumber: { $regex: search, $options: 'i' } },
+        { organizationName: { $regex: search, $options: 'i' } },
+        { statusDescription: { $regex: search, $options: 'i' } }
       ];
     }
 
