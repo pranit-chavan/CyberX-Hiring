@@ -20,8 +20,8 @@ const CONTRIBUTION_ROLES = [];
 
 
 const STATUS_OPTIONS = [
-  'I am a UG/PG student studying in Computer Science',
-  'I am a UG/PG student studying in a non–computer science–related degree',
+  'I am a UG/PG student studying in Computer Science or related degree',
+  'I am a UG/PG student studying in a non–computer science related degree',
   'I am a working professional',
   'I have just passed out and am looking for a working opportunity'
 ];
@@ -52,19 +52,19 @@ const FAQ_DATA = [
     answer: (
       <span>
         Please go through our{' '}
-        <a href="https://cyberx.community" target="_blank" rel="noopener noreferrer" className="text-cyber-yellow hover:underline">
+        <a href="https://www.cyberx.org.in/" target="_blank" rel="noopener noreferrer" className="text-cyber-yellow hover:underline">
           website
         </a>{' '}
         and social media handles ({' '}
-        <a href="https://www.linkedin.com/company/cyberx-community" target="_blank" rel="noopener noreferrer" className="text-cyber-yellow hover:underline">
+        <a href="https://www.linkedin.com/company/cyberx-nashik-community/?originalSubdomain=in" target="_blank" rel="noopener noreferrer" className="text-cyber-yellow hover:underline">
           LinkedIn
         </a>
         ,{' '}
-        <a href="https://www.instagram.com/cyberx_community" target="_blank" rel="noopener noreferrer" className="text-cyber-yellow hover:underline">
+        <a href="https://www.instagram.com/cyberx.nashik" target="_blank" rel="noopener noreferrer" className="text-cyber-yellow hover:underline">
           Instagram
         </a>
         ,{' '}
-        <a href="https://www.commudle.com/communities/cyberx" target="_blank" rel="noopener noreferrer" className="text-cyber-yellow hover:underline">
+        <a href="https://www.commudle.com/communities/cyberx-nashik" target="_blank" rel="noopener noreferrer" className="text-cyber-yellow hover:underline">
           Commudle
         </a>{' '}
         ) to know about our past events, CTFs, and community activities.
@@ -268,7 +268,26 @@ export default function CyberXHiring() {
       localStorage.removeItem(STORAGE_KEY);
       setSuccess(true);
     } catch (err) {
-      setSubmitError(err.message || 'Submission failed. Try again later.');
+      const errorMessage = err.message || 'Submission failed. Try again later.';
+      setSubmitError(errorMessage);
+
+      // Send error to webhook for debugging
+      try {
+        await fetch('/api/webhook-error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            error: errorMessage,
+            fullName: ui.fullName,
+            email: ui.email,
+            whatsappNumber: ui.whatsappNumber,
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (webhookErr) {
+        // Silently fail - don't show webhook errors to user
+        console.error('Failed to send error to webhook:', webhookErr);
+      }
     } finally {
       setLoading(false);
     }
@@ -491,21 +510,17 @@ export default function CyberXHiring() {
                             return { ...prev, domainInterests: newInterests, domainLevels: newLevels };
                           });
                         }}>
-                          <div className="flex h-5 items-center pointer-events-none">
-                            <input
-                              id={`domain-${interest}`}
-                              name="domainInterests"
-                              type="checkbox"
-                              checked={isSelected}
-                              readOnly
-                              className="h-4 w-4 rounded border-cyber-gray text-cyber-yellow focus:ring-cyber-yellow bg-cyber-black"
-                            />
+                          <div className={`w-5 h-5 mr-3 rounded border flex items-center justify-center transition-all flex-shrink-0
+                               ${isSelected ? 'bg-cyber-yellow border-cyber-yellow' : 'border-cyber-text-muted/40'}`}>
+                            {isSelected && (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-black" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
                           </div>
-                          <div className="ml-3 text-sm pointer-events-none">
-                            <label className={`font-medium ${isSelected ? 'text-white' : 'text-cyber-text-muted'} select-none`}>
-                              {interest}
-                            </label>
-                          </div>
+                          <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-400'} select-none`}>
+                            {interest}
+                          </span>
                         </div>
 
                         {/* Level Selection for Selected Domain */}
@@ -523,7 +538,7 @@ export default function CyberXHiring() {
                                   }}
                                   className={`px-3 py-1 text-xs rounded-full border transition-all ${ui.domainLevels[interest] === lvl
                                     ? 'bg-cyber-yellow text-black border-cyber-yellow font-medium'
-                                    : 'bg-transparent text-cyber-text-muted border-cyber-border hover:border-cyber-text-muted hover:text-white'
+                                    : 'bg-transparent text-gray-400 border-cyber-border hover:border-gray-400 hover:text-white'
                                     }`}
                                 >
                                   {lvl}
@@ -559,7 +574,7 @@ export default function CyberXHiring() {
                             className={`flex items-center px-4 py-3 rounded-lg border cursor-pointer transition-all duration-200
                                ${isSelected
                                 ? 'bg-cyber-card border-cyber-yellow/50 text-white'
-                                : 'bg-cyber-card border-cyber-border text-cyber-text-muted hover:border-cyber-border-hover'
+                                : 'bg-cyber-card border-cyber-border text-gray-400 hover:border-cyber-border-hover'
                               }`}
                           >
                             <div className={`w-5 h-5 mr-3 rounded border flex items-center justify-center transition-all flex-shrink-0
@@ -624,13 +639,12 @@ export default function CyberXHiring() {
               <Section title="Contribution Areas">
                 <div className="mb-6 space-y-6 text-sm text-cyber-text-secondary">
                   <div>
-                    <p className="mb-2"><span className="text-white font-medium">Primary Contribution:</span> Selection will be based on the individual's core domain expertise in which they are shortlisted.</p>
+                    <p className="mb-2"><span className="text-white font-medium">Primary Contribution:</span> You will be contributing based on your selected domain expertise. The contribution areas under this will include:</p>
                     <ul className="list-disc pl-5 space-y-1">
-                      <li>Open-source cybersecurity and hacking-related tools</li>
-                      <li>Content creation in the form of PDFs, documentation, and structured learning material</li>
-                      <li>Designing and developing hands-on labs and practical exercises</li>
-                      <li>Conducting online sessions, workshops, or knowledge-sharing talks on relevant topics</li>
-                      <li>Researching emerging cybersecurity trends and publishing technical insights</li>
+                      <li>Developing open-source cybersecurity and hacking-related tools</li>
+                      <li>Creating content in the form of predefined documentation, structured learning materials, and hands-on labs</li>
+                      <li>Conducting online sessions, workshops, and knowledge-sharing talks relevant to your domain</li>
+                      <li>Researching emerging cybersecurity trends, techniques, and tools</li>
                     </ul>
                   </div>
 
@@ -844,7 +858,7 @@ function CheckboxGrid({ options, values, onToggle, error }) {
               className={`flex items-center px-4 py-3 rounded-lg border transition-all duration-200 text-left
                 ${isSelected
                   ? 'bg-cyber-card border-cyber-yellow/50 text-white'
-                  : 'bg-cyber-card border-cyber-border text-cyber-text-muted hover:border-cyber-border-hover'
+                  : 'bg-cyber-card border-cyber-border text-gray-400 hover:border-cyber-border-hover'
                 }`}
             >
               <div className={`w-5 h-5 mr-3 rounded border flex items-center justify-center transition-all flex-shrink-0
@@ -877,7 +891,7 @@ function RadioRow({ name, value, options, onChange, error, label, vertical = fal
                ${vertical ? 'w-full text-left' : ''}
                ${value === opt
                 ? 'bg-cyber-yellow text-black border-cyber-yellow'
-                : 'bg-transparent text-cyber-text-muted border-cyber-border hover:border-cyber-text-muted'
+                : 'bg-transparent text-gray-400 border-cyber-border hover:border-gray-400'
               }`}
           >
             <input
