@@ -172,11 +172,11 @@ export async function POST(request) {
 
       const webhookUrl = process.env.WEBHOOK_URL;
       if (webhookUrl) {
-        fetch(webhookUrl, {
+        await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(webhookData)
-        }).catch(err => console.error('Webhook error:', err));
+        });
       }
     } catch (webhookError) {
       console.error('Webhook preparation error:', webhookError);

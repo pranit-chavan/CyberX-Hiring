@@ -103,7 +103,7 @@ export default function CyberXHiring() {
     platformsUsed: [],
     certificationDetails: '',
     platformProfileLink: '',
-    profileLinks: '',
+    linkedinProfile: '',
     ctfParticipation: '',
     // ctfAchievements removed
 
@@ -169,7 +169,7 @@ export default function CyberXHiring() {
     if (ui.platformsUsed.includes('I have done certification from EC-Council, INE, OffSec, THM and others') && !ui.certificationDetails) {
       e.certificationDetails = 'Please specify your certifications';
     }
-    if (!ui.profileLinks) e.profileLinks = 'Required';
+    if (!ui.linkedinProfile) e.linkedinProfile = 'Required';
 
 
 
@@ -446,8 +446,8 @@ export default function CyberXHiring() {
                   <Field label="Mobile / WhatsApp Number" required error={fe('whatsappNumber')}>
                     <Input name="whatsappNumber" value={ui.whatsappNumber} onChange={onChange} placeholder="+91 98765 43210" />
                   </Field>
-                  <Field label="LinkedIn Profile URL" required error={fe('profileLinks')}>
-                    <Input name="profileLinks" value={ui.profileLinks} onChange={onChange} placeholder="https://www.linkedin.com/in/..." />
+                  <Field label="LinkedIn Profile URL" required error={fe('linkedinProfile')}>
+                    <Input name="linkedinProfile" value={ui.linkedinProfile} onChange={onChange} placeholder="https://www.linkedin.com/in/..." />
                     <p className="mt-2 text-xs text-cyber-text-muted">
                       * Make sure you have an updated LinkedIn profile.
                     </p>

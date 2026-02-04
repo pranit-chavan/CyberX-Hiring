@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberX Hiring Poster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --color-cyber-black: #0F0F0F;
+            --color-cyber-dark: #151515;
+            --color-cyber-card: #202020;
+            --color-cyber-yellow: #E6C200;
+            --color-cyber-text: #F2F2F2;
+            --color-cyber-text-secondary: #9A9A9A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Updated Layout Styles */
+        .poster-container {
+            width: 1080px;
+            height: 1080px;
+            background-color: var(--color-cyber-black);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            /* Header top, Footer bottom */
+            padding: 80px 60px;
+            /* Reduced vertical padding slightly to allow more space */
+            border: 1px solid #333;
+        }
+
+        .logo {
+            width: 380px;
+            object-fit: contain;
+            /* margin-bottom removed as it is now a flex item at start */
+        }
+
+        .content {
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            flex-grow: 1;
+            /* Takes available space between logo and CTA */
+            width: 100%;
+        }
+
+        .tagline {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--color-cyber-text);
+            margin-bottom: 15px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .main-heading {
+            font-size: 90px;
+            /* Increased slightly for impact */
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.1;
+            margin-bottom: 30px;
+        }
+
+        .highlight-x {
+            color: var(--color-cyber-yellow);
+        }
+
+        .description {
+            font-size: 38px;
+            color: var(--color-cyber-text-secondary);
+            font-weight: 500;
+            max-width: 900px;
+            line-height: 1.4;
+            margin-bottom: 0;
+            /* No bottom margin needed as flex centers it */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="poster-container">
+        <!-- Decoration -->
+        <div class="glow"></div>
+        <div class="glow-bottom"></div>
+
+        <!-- Header: Logo -->
+        <img src="./public/assets/cyberx_logo_new.png" alt="CyberX Logo" class="logo">
+
+        <!-- Center: Text Content -->
+        <div class="content">
+            <h2 class="tagline">We are Hiring</h2>
+            <h1 class="main-heading">
+                Cyber<span class="highlight-x">X</span> is expanding! 🚀
+            </h1>
+            <p class="description">
+                We’re growing our team and would love to hear from you. Share your details or apply now to be part of
+                CyberX.
+            </p>
+        </div>
+
+        <!-- Footer / CTA -->
+        <div class="cta-container">
+            <div class="url-box">
+                <span class="website-url">join.cyberx.org.in</span>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
