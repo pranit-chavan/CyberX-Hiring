@@ -232,7 +232,14 @@ export default function CyberXHiring() {
     const v = validate();
     setErrors(v);
     setTouched(Object.keys(ui).reduce((a, k) => ({ ...a, [k]: true }), {}));
-    if (Object.keys(v).length) return;
+    if (Object.keys(v).length) {
+      const firstErrorKey = Object.keys(v)[0];
+      const element = document.querySelector(`[name="${firstErrorKey}"]`) || document.getElementById(firstErrorKey);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
 
     const formData = new FormData();
 
@@ -497,7 +504,7 @@ export default function CyberXHiring() {
 
 
               <Section title="Cybersecurity Domain Interests">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="domainInterests" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {DOMAIN_INTERESTS.map(interest => {
                     const isSelected = ui.domainInterests.includes(interest);
                     return (
@@ -561,7 +568,7 @@ export default function CyberXHiring() {
                     <label className="mb-3 text-sm font-medium text-cyber-text-secondary block">
                       From where do you learn hacking, or how do you learn based on your selected domain expertise? <span className="text-cyber-yellow">*</span>
                     </label>
-                    <div className="flex flex-col gap-3">
+                    <div id="platformsUsed" className="flex flex-col gap-3">
                       {LEARNING_OPTIONS.map(opt => {
                         const isSelected = ui.platformsUsed.includes(opt);
                         return (

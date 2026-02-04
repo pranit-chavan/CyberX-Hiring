@@ -73,6 +73,14 @@ export async function POST(request) {
         const arrayKey = key.slice(0, -2);
         if (!data[arrayKey]) data[arrayKey] = [];
         data[arrayKey].push(value);
+      } else if (key.startsWith('domainLevels[')) {
+        // Parse nested keys: domainLevels[Web Security]
+        const match = key.match(/domainLevels\[(.*?)\]/);
+        if (match) {
+          const domain = match[1];
+          if (!data.domainLevels) data.domainLevels = {};
+          data.domainLevels[domain] = value;
+        }
       } else {
         data[key] = value;
       }
