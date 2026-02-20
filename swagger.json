@@ -1,0 +1,1866 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CyberX Hiring API",
+    "description": "REST API for the CyberX Community Hiring Platform.\n\nThis API manages the full lifecycle of cybersecurity community recruitment \u2014 from\naccepting applications to admin review, tracking, and export. It also includes\na VAPT (Vulnerability Assessment & Penetration Testing) notes system with\nGemini AI integration for automated summarization.\n\n## Authentication\nAdmin endpoints require a valid JWT token obtained via `/api/auth/login`.\nThe token can be sent as:\n- **Cookie**: `cx_admin_session_v2=<token>` (set automatically on login)\n- **Bearer Token**: `Authorization: Bearer <token>`\n\n## Rate Limiting\n- `POST /api/applications` \u2014 1 request per IP per 5 minutes\n- `POST /api/applications/track` \u2014 10 requests per IP per 15 minutes\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "CyberX Community",
+      "url": "https://cyberx.org.in"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://join.cyberx.org.in",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Applications",
+      "description": "Public application submission and admin management"
+    },
+    {
+      "name": "Application Tracking",
+      "description": "Public endpoint for applicants to check their status"
+    },
+    {
+      "name": "Authentication",
+      "description": "Admin login and logout"
+    },
+    {
+      "name": "Notes",
+      "description": "VAPT penetration testing notes with AI processing"
+    },
+    {
+      "name": "Targets",
+      "description": "Penetration testing target management"
+    },
+    {
+      "name": "Admin Setup",
+      "description": "Initial admin account provisioning"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Error reporting via webhook"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained from `/api/auth/login`"
+      },
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "cx_admin_session_v2",
+        "description": "Session cookie set automatically on login"
+      }
+    },
+    "schemas": {
+      "Application": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB ObjectId",
+            "example": "665f1a2b3c4d5e6f7a8b9c0d"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "whatsappNumber": {
+            "type": "string",
+            "example": "+919876543210"
+          },
+          "linkedinProfile": {
+            "type": "string",
+            "example": "https://linkedin.com/in/johndoe"
+          },
+          "statusDescription": {
+            "type": "string",
+            "description": "What describes the applicant best (e.g. Student, Professional)",
+            "example": "3rd Year B.Tech Student"
+          },
+          "organizationName": {
+            "type": "string",
+            "description": "College or organization name",
+            "example": "IIT Bombay"
+          },
+          "domainInterests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Web Security",
+              "Network Security",
+              "Malware Analysis"
+            ]
+          },
+          "domainLevels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Domain expertise levels as key-value pairs",
+            "example": {
+              "Web Security": "Intermediate",
+              "Network Security": "Beginner"
+            }
+          },
+          "platformsUsed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "TryHackMe",
+              "HackTheBox"
+            ]
+          },
+          "certificationDetails": {
+            "type": "string",
+            "example": "CompTIA Security+"
+          },
+          "platformProfileLink": {
+            "type": "string",
+            "description": "TryHackMe / HackTheBox profile link",
+            "example": "https://tryhackme.com/p/johndoe"
+          },
+          "ctfParticipation": {
+            "type": "string",
+            "example": "Participated in PicoCTF 2024"
+          },
+          "whyJoinCyberX": {
+            "type": "string",
+            "example": "I want to contribute to open-source cybersecurity tools."
+          },
+          "declarationAccepted": {
+            "type": "boolean",
+            "example": true
+          },
+          "resumePath": {
+            "type": "string",
+            "description": "URL of the uploaded resume on Vercel Blob",
+            "example": "https://abc.public.blob.vercel-storage.com/resumes/john_example_com_1700000000.pdf"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "shortlisted",
+              "selected",
+              "rejected",
+              "approved"
+            ],
+            "default": "pending"
+          },
+          "adminRemarks": {
+            "type": "string"
+          },
+          "feedback": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Admin": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string",
+            "example": "admin"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@cyberx.org.in"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "description": "MongoDB ObjectId referencing a Target"
+          },
+          "title": {
+            "type": "string",
+            "description": "AI-generated title",
+            "example": "SQL Injection on Login Page"
+          },
+          "summary": {
+            "type": "string",
+            "description": "AI-generated summary",
+            "example": "Found a blind SQL injection vulnerability..."
+          },
+          "content": {
+            "type": "string",
+            "description": "Raw terminal output or markdown content"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL of uploaded screenshot on Vercel Blob"
+          },
+          "imageAnalysis": {
+            "type": "string",
+            "description": "AI-generated image analysis"
+          },
+          "isAiProcessed": {
+            "type": "boolean",
+            "default": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Target": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "example": "api.example.com"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "SuccessMessage": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ApplicationStats": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "example": 150
+          },
+          "pending": {
+            "type": "integer",
+            "example": 80
+          },
+          "shortlisted": {
+            "type": "integer",
+            "example": 30
+          },
+          "selected": {
+            "type": "integer",
+            "example": 20
+          },
+          "rejected": {
+            "type": "integer",
+            "example": 15
+          },
+          "approved": {
+            "type": "integer",
+            "example": 5
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/applications": {
+      "post": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Submit a new application",
+        "description": "Public endpoint for applicants. Accepts `multipart/form-data` including an\noptional resume PDF. Rate limited to **1 submission per IP per 5 minutes**.\nIncludes a honeypot field (`companyWebsite`) for bot detection.\nOn success, a webhook is fired (non-blocking) to the configured `WEBHOOK_URL`.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fullName",
+                  "email",
+                  "whatsappNumber",
+                  "statusDescription",
+                  "whyJoinCyberX",
+                  "declarationAccepted"
+                ],
+                "properties": {
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "whatsappNumber": {
+                    "type": "string"
+                  },
+                  "linkedinProfile": {
+                    "type": "string"
+                  },
+                  "statusDescription": {
+                    "type": "string"
+                  },
+                  "organizationName": {
+                    "type": "string"
+                  },
+                  "domainInterests[]": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "domainLevels[Web Security]": {
+                    "type": "string",
+                    "description": "Domain level fields sent as `domainLevels[<domain>]=<level>`"
+                  },
+                  "platformsUsed[]": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "certificationDetails": {
+                    "type": "string"
+                  },
+                  "platformProfileLink": {
+                    "type": "string"
+                  },
+                  "ctfParticipation": {
+                    "type": "string"
+                  },
+                  "whyJoinCyberX": {
+                    "type": "string"
+                  },
+                  "declarationAccepted": {
+                    "type": "string",
+                    "enum": [
+                      "true",
+                      "false"
+                    ]
+                  },
+                  "resumeFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Optional PDF resume (uploaded to Vercel Blob)"
+                  },
+                  "companyWebsite": {
+                    "type": "string",
+                    "description": "\u26a0\ufe0f Honeypot field \u2014 must be empty. Non-empty values cause silent rejection."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Application submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Application submitted successfully"
+                    },
+                    "applicationId": {
+                      "type": "string",
+                      "example": "665f1a2b3c4d5e6f7a8b9c0d"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or duplicate email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "List all applications (Admin)",
+        "description": "Returns all applications with optional filtering by status and search term.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "shortlisted",
+                "selected",
+                "rejected",
+                "approved"
+              ]
+            },
+            "description": "Filter by application status"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search across name, email, phone, organization, and status description"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of applications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applications": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Application"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Application MongoDB ObjectId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Get a single application (Admin)",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Application not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Update an application (Admin)",
+        "description": "Full update of application fields.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "whatsappNumber": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "shortlisted",
+                      "selected",
+                      "rejected",
+                      "approved"
+                    ]
+                  },
+                  "adminRemarks": {
+                    "type": "string"
+                  },
+                  "feedback": {
+                    "type": "string"
+                  }
+                },
+                "description": "Any Application fields to update"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "application": {
+                      "$ref": "#/components/schemas/Application"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Application not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Update application status (Admin)",
+        "description": "Quick status-only update for an application.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "shortlisted",
+                      "selected",
+                      "rejected",
+                      "approved"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "application": {
+                      "$ref": "#/components/schemas/Application"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Application not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Delete an application (Admin)",
+        "description": "Deletes the application and its associated resume blob from Vercel Blob storage.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Application not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/stats": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Get application statistics (Admin)",
+        "description": "Returns aggregate counts of applications grouped by status.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationStats"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/export": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Export applications as CSV or JSON (Admin)",
+        "description": "Download all applications as a file. Supports filtering by status and role.",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "csv",
+                "json"
+              ],
+              "default": "csv"
+            },
+            "description": "Export file format"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "pending",
+                "shortlisted",
+                "selected",
+                "rejected",
+                "approved"
+              ],
+              "default": "all"
+            },
+            "description": "Filter by application status"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "all"
+            },
+            "description": "Filter by contribution area"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File download",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Application"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/track": {
+      "post": {
+        "tags": [
+          "Application Tracking"
+        ],
+        "summary": "Track application status (Public)",
+        "description": "Allows applicants to check their application status by email or WhatsApp number.\nRate limited to **10 requests per IP per 15 minutes**.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "search"
+                ],
+                "properties": {
+                  "search": {
+                    "type": "string",
+                    "minLength": 3,
+                    "description": "Email address or WhatsApp number",
+                    "example": "john@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application status found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "application": {
+                      "type": "object",
+                      "properties": {
+                        "fullName": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "shortlisted",
+                            "selected",
+                            "rejected",
+                            "approved"
+                          ]
+                        },
+                        "lastUpdated": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "submittedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "organizationName": {
+                          "type": "string"
+                        },
+                        "statusDescription": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search term",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No application found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Admin login",
+        "description": "Authenticates an admin and returns a JWT token valid for 24 hours.\nThe token is also set as an HttpOnly cookie (`cx_admin_session_v2`).\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "admin"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "s3cur3P@ss"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "example": "cx_admin_session_v2=eyJ...; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=86400"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Login successful"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "JWT token"
+                    },
+                    "admin": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Admin logout",
+        "description": "Clears the admin session cookie.",
+        "responses": {
+          "200": {
+            "description": "Logged out successfully",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "example": "cx_admin_session_v2=; Path=/; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notes": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List notes",
+        "description": "Returns all notes, optionally filtered by target ID. Sorted by creation date (newest first).",
+        "parameters": [
+          {
+            "name": "targetId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter notes by Target ObjectId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Note"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create a note with AI processing",
+        "description": "Creates a new VAPT note. The content is processed by Google Gemini AI to auto-generate\na title and summary. An optional screenshot can be uploaded for AI image analysis.\n\nRequires `x-gemini-api-key` header for AI processing.\n",
+        "parameters": [
+          {
+            "name": "x-gemini-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Google Gemini API key"
+          },
+          {
+            "name": "x-gemini-model",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "gemini-2.0-flash"
+            },
+            "description": "Gemini model to use"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "content",
+                  "targetId"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "Terminal output or markdown content"
+                  },
+                  "targetId": {
+                    "type": "string",
+                    "description": "Target ObjectId this note belongs to"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Optional screenshot image"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Note"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields or processing error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Update a note with AI re-processing",
+        "description": "Updates a note's content and re-processes it with Gemini AI for a new title and summary.\nOptionally upload a new screenshot.\n",
+        "parameters": [
+          {
+            "name": "x-gemini-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Google Gemini API key"
+          },
+          {
+            "name": "x-gemini-model",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "gemini-2.0-flash"
+            },
+            "description": "Gemini model to use"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "noteId",
+                  "content"
+                ],
+                "properties": {
+                  "noteId": {
+                    "type": "string",
+                    "description": "Note ObjectId to update"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "Updated content"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Optional new screenshot image"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Note updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Note"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete a note",
+        "parameters": [
+          {
+            "name": "noteId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Note ObjectId to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Note"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing noteId or error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/targets": {
+      "get": {
+        "tags": [
+          "Targets"
+        ],
+        "summary": "List all targets",
+        "description": "Returns all penetration testing targets sorted by creation date (newest first).",
+        "responses": {
+          "200": {
+            "description": "List of targets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Target"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Targets"
+        ],
+        "summary": "Create a target",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 60,
+                    "example": "api.example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Target created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Target"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/setup-admin": {
+      "get": {
+        "tags": [
+          "Admin Setup"
+        ],
+        "summary": "Provision or reset admin account",
+        "description": "Creates the default admin account or resets an existing admin's password.\nRequires the `x-setup-secret` header matching the `SETUP_SECRET` environment variable.\nAdmin credentials are read from `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_PASSWORD`,\nand `DEFAULT_ADMIN_EMAIL` environment variables.\n",
+        "parameters": [
+          {
+            "name": "x-setup-secret",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Must match the SETUP_SECRET environment variable"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin created or password reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Setup disabled or unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration or server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhook-error": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Report form submission errors via webhook",
+        "description": "Forwards form submission error details to the configured `WEBHOOK_URL`.\nUsed by the frontend to report client-side submission failures.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "string",
+                    "description": "Error message"
+                  },
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "whatsappNumber": {
+                    "type": "string"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Error reported successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Webhook not configured or failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

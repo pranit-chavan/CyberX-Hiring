@@ -33,7 +33,9 @@ export async function POST(request) {
     const secret = new TextEncoder().encode(JWT_SECRET);
     const token = await new SignJWT({
       adminId: admin._id?.toString() || admin.id?.toString() || username,
-      username: admin.username
+      username: admin.username,
+      role: admin.role || 'super_admin',
+      chapterId: admin.chapterId?.toString() || null
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -46,7 +48,9 @@ export async function POST(request) {
       admin: {
         id: admin._id || admin.id,
         username: admin.username,
-        email: admin.email
+        email: admin.email,
+        role: admin.role || 'super_admin',
+        chapterId: admin.chapterId?.toString() || null
       }
     }, {
       headers: {
