@@ -12,6 +12,7 @@ export default function AdminDashboard() {
   const [experienceFilter, setExperienceFilter] = useState('All');
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
+  const [selectedApps, setSelectedApps] = useState(new Set());
   const [stats, setStats] = useState({
     total: 0, priority: 0, pending: 0, shortlisted: 0, selected: 0, rejected: 0
   });
@@ -111,6 +112,28 @@ export default function AdminDashboard() {
     router.refresh();
   };
 
+  const handleSelectApp = (applicationId) => {
+    const newSelected = new Set(selectedApps);
+    if (newSelected.has(applicationId)) {
+      newSelected.delete(applicationId);
+    } else {
+      newSelected.add(applicationId);
+    }
+    setSelectedApps(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedApps.size === filteredApplications.length && filteredApplications.length > 0) {
+      setSelectedApps(new Set());
+    } else {
+      setSelectedApps(new Set(filteredApplications.map(app => app._id)));
+    }
+  };
+
+  useEffect(() => {
+    setSelectedApps(new Set());
+  }, [searchTerm, statusFilter, experienceFilter]);
+
   const filteredApplications = useMemo(() => {
     return applications.filter(app => {
       const matchesSearch = searchTerm === '' ||
@@ -124,10 +147,16 @@ export default function AdminDashboard() {
     });
   }, [applications, searchTerm, statusFilter, experienceFilter]);
 
-  const exportToCSV = () => {
+  const exportToCSV = (onlySelected = false) => {
+    const appsToExport = onlySelected
+      ? filteredApplications.filter(app => selectedApps.has(app._id))
+      : filteredApplications;
+
+    if (appsToExport.length === 0) return;
+
     // Updated Headers and Fields matching new schema
     const headers = ['Name', 'Email', 'Phone', 'Status Description', 'Organization', 'Status', 'Interested Domains'];
-    const csvData = filteredApplications.map(app => [
+    const csvData = appsToExport.map(app => [
       app.fullName,
       app.email,
       app.whatsappNumber || '',
@@ -225,8 +254,9 @@ export default function AdminDashboard() {
             <div className="relative exportDropdown">
               <button onClick={() => setShowExportDropdown(!showExportDropdown)} className="bg-[#E6C200] text-black text-sm font-medium px-4 py-2 rounded-lg">Export</button>
               {showExportDropdown && (
-                <div className="absolute right-0 mt-2 w-40 bg-[#202020] border border-[#2A2A2A] rounded-lg shadow-xl z-20 py-1">
-                  <button onClick={exportToCSV} className="block w-full text-left px-4 py-2 text-xs text-[#F2F2F2] hover:bg-[#2A2A2A]">CSV</button>
+                <div className="absolute right-0 mt-2 w-48 bg-[#202020] border border-[#2A2A2A] rounded-lg shadow-xl z-20 py-1">
+                  <button onClick={() => exportToCSV(false)} className="block w-full text-left px-4 py-2 text-xs text-[#F2F2F2] hover:bg-[#2A2A2A]">Export All (CSV)</button>
+                  <button onClick={() => exportToCSV(true)} disabled={selectedApps.size === 0} className={`block w-full text-left px-4 py-2 text-xs ${selectedApps.size > 0 ? 'text-[#F2F2F2] hover:bg-[#2A2A2A]' : 'text-[#666] cursor-not-allowed'}`}>Export Selected (CSV)</button>
                 </div>
               )}
             </div>
@@ -241,6 +271,14 @@ export default function AdminDashboard() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#151515] border-b border-[#2A2A2A] text-[#666] text-xs uppercase font-semibold tracking-wider">
+                    <th className="py-4 px-6 w-12">
+                      <input
+                        type="checkbox"
+                        className="rounded cursor-pointer accent-[#E6C200]"
+                        checked={filteredApplications.length > 0 && selectedApps.size === filteredApplications.length}
+                        onChange={handleSelectAll}
+                      />
+                    </th>
                     <th className="py-4 px-6 w-1/5">Applicant</th>
                     <th className="py-4 px-6 w-1/5">Organization / Status</th>
                     <th className="py-4 px-6">Interested Domains</th>
@@ -251,7 +289,15 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-[#2A2A2A]">
                   {filteredApplications.map((app) => (
-                    <tr key={app._id} className="hover:bg-white/[0.02] transition-colors">
+                    <tr key={app._id} className={`hover:bg-white/[0.02] transition-colors ${selectedApps.has(app._id) ? 'bg-[#E6C200]/5' : ''}`}>
+                      <td className="py-4 px-6">
+                        <input
+                          type="checkbox"
+                          className="rounded cursor-pointer accent-[#E6C200]"
+                          checked={selectedApps.has(app._id)}
+                          onChange={() => handleSelectApp(app._id)}
+                        />
+                      </td>
                       <td className="py-4 px-6">
                         <div className="text-[#F2F2F2] font-medium text-sm">{app.fullName}</div>
                         <div className="text-[#666] text-xs mt-0.5">{app.email}</div>
