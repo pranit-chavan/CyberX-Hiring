@@ -1,4 +1,4 @@
-# CyberX Community Platform
+CyberX Community Hiring Form 
 
 A professional, secure community engagement and hiring platform built for the CyberX cybersecurity community. This project features a clean, calm, and professional UI designed for enterprise-grade usability.
 
@@ -96,4 +96,3 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed step-by-step production deploy
 
 ---
 © 2026 CyberX Community
-hi
